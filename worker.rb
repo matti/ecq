@@ -7,7 +7,16 @@ WORKER_ID = ENV['WORKER_ID']
 raise "WORKER_ID not set" if WORKER_ID.to_i == 0
 
 ECQ_ENDPOINT="http://localhost:4567"
+
 APP_ENDPOINT="http://localhost:3000"
+
+# APP_ENDPOINT_REDO_PREFIX=
+# APP_ENDPOINT_REDO_MIDDIX=
+# APP_ENDPOINT_REDO_SUFFIX=
+# 
+# def build_endpoint_url(node_id, transaction_id)
+#   eval "APP_ENDPOINT=\"#{APP_ENDPOINT}\""
+# end
 
 def parse_response_body(r)
   if r.body == ""
@@ -66,7 +75,6 @@ def undo!(work)
     puts "Can not undo work"
   end
   
-  sleep 5
   commit!(work)
   complete_work!
 end
@@ -84,11 +92,10 @@ while (true) do
   if work
     puts "Consuming work: #{work.inspect}"
     commit!(work)
-    sleep 50
-
     puts "Completing work: #{work}"
     complete_work!
-
+    #undolog_notify!
+    
   end
   
   sleep 1

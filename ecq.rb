@@ -4,8 +4,11 @@ require 'redis'
 require 'json'
 
 configure do
-  REDIS = Redis.new
   NODE = "a"
+end
+
+before do
+  @redis = Redis.new
 end
 
 helpers do
@@ -19,15 +22,15 @@ end
 post '/queue/:name' do
   queue_name = params[:name]
   
-  REDIS.lpush queue_name, params[:message]
+  @redis.lpush queue_name, params[:message]
 end
 
 def work_in_queue?(worker_queue)
-  REDIS.llen(worker_queue) > 0
+  @redis.llen(worker_queue) > 0
 end
 
 def current_id(worker_queue)
-  REDIS.get("#{worker_queue}-id") 
+  @redis.get("#{worker_queue}-id") 
 end
 
 get '/work/:worker_id' do
@@ -61,14 +64,14 @@ post '/reserve/:name/:worker_id' do
   work_in_queue = work_in_queue?(worker_queue)
 
   unless work_in_queue
-    work_in_queue = REDIS.rpoplpush(queue_name, worker_queue)
+    work_in_queue = @redis.rpoplpush(queue_name, worker_queue)
   end
   
   id = current_id(worker_queue)
   
   unless work_in_queue && id
-    id = REDIS.incr "id"
-    REDIS.set "#{worker_queue}-id", id
+    id = @redis.incr "id"
+    @redis.set "#{worker_queue}-id", id
   end
   
   if work_in_queue && id
@@ -84,9 +87,9 @@ delete '/complete/:worker_id' do
   
   worker_queue = "w#{worker_id}"
 
-  REDIS.multi do
-    REDIS.lpop worker_queue
-    REDIS.del "#{worker_queue}-id"
+  @redis.multi do
+    @redis.lpop worker_queue
+    @redis.del "#{worker_queue}-id"
   end
 
   ''
@@ -97,5 +100,5 @@ private
 def build_response(id, worker_queue)
   response = {:node => NODE,
               :id => id,
-              :message => REDIS.lindex(worker_queue, 0)}
+              :message => @redis.lindex(worker_queue, 0)}
 end
