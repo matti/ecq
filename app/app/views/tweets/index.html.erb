@@ -1,0 +1,14 @@
+<h1>Tweets</h1>
+
+<ul>
+<% @tweets.each do |t| %>
+	<li><%= t.message %></li>
+<% end %>
+</ul>
+
+<br/>
+
+<%= form_for @tweet do |f| %>
+	<%= f.text_field :message %>
+	<%= submit_tag "ok" %>
+<% end %>
